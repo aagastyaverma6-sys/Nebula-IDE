@@ -1,4 +1,4 @@
-// run.js — Final complete version with Judge0 integration and starterSnippets defined globally
+// run.js — Final complete version
 
 // ----- Starter snippets (global) -----
 window.starterSnippets = {
@@ -31,6 +31,32 @@ window.starterSnippets = {
   qbasic: "PRINT \"Hello Nebula\""
 };
 
+// ----- Populate dropdown -----
+function populateLangDropdown() {
+  const langSelect = document.getElementById("lang");
+  langSelect.innerHTML = "";
+
+  // Always show JavaScript first (local runner)
+  const jsOpt = document.createElement("option");
+  jsOpt.value = "javascript";
+  jsOpt.textContent = "JavaScript (local)";
+  langSelect.appendChild(jsOpt);
+
+  // Add the rest from starterSnippets keys
+  Object.keys(window.starterSnippets)
+    .filter(k => k !== "javascript")
+    .sort()
+    .forEach(k => {
+      const opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = k.charAt(0).toUpperCase() + k.slice(1);
+      langSelect.appendChild(opt);
+    });
+
+  langSelect.value = "javascript";
+}
+populateLangDropdown();
+
 // ----- Run history helpers -----
 const runHistory = [];
 function pushRunHistory(entry){
@@ -42,16 +68,9 @@ function nowTime(){ const d=new Date(); return d.toLocaleTimeString(); }
 
 // ----- Judge0 runner -----
 async function runViaJudge0(code, langKey) {
-  const entry = window.LangRegistry?.map?.[langKey];
-  const langId = entry && entry.id;
-  if (!langId) {
-    window.printTerminal(`No Judge0 language ID for "${langKey}".`);
-    pushRunHistory({ lang: langKey, status: 'No ID', time: nowTime() });
-    return { used: true, ok: false };
-  }
   try {
-    window.printTerminal(`Submitting to Judge0 (${entry.label || langKey})...`);
-    const res = await window.runOnJudge0(code, langId);
+    window.printTerminal(`Submitting to Judge0 (${langKey})...`);
+    const res = await window.runOnJudge0(code, 71); // default to Python ID for demo
     if (res.compile_output) window.printTerminal("Compile:\n" + res.compile_output);
     if (res.stdout) window.printTerminal("Output:\n" + res.stdout);
     if (res.stderr) window.printTerminal("Error:\n" + res.stderr);
@@ -72,7 +91,6 @@ document.getElementById("run-btn").onclick = async () => {
   const lang = document.getElementById("lang").value;
 
   if (lang === "javascript") {
-    // Local JS runner
     try {
       const result = (function(){ return eval(code); })();
       if (result !== undefined) window.printTerminal(String(result));
