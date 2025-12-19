@@ -1,7 +1,4 @@
-// run.js — Final fixed version
-// - Starter snippets defined ONCE on window
-// - Dynamic Judge0 language loading
-// - JavaScript runs locally, others via Judge0
+// run.js — Final complete version with Judge0 integration and starterSnippets defined globally
 
 // ----- Starter snippets (global) -----
 window.starterSnippets = {
@@ -75,6 +72,7 @@ document.getElementById("run-btn").onclick = async () => {
   const lang = document.getElementById("lang").value;
 
   if (lang === "javascript") {
+    // Local JS runner
     try {
       const result = (function(){ return eval(code); })();
       if (result !== undefined) window.printTerminal(String(result));
@@ -100,4 +98,20 @@ document.getElementById('copy-terminal').addEventListener('click', async () => {
   }
 });
 document.getElementById('download-log').addEventListener('click', () => {
-  const blob = new Blob([document.getElementById('term-content').textContent], { type: 'text/plain
+  const blob = new Blob([document.getElementById('term-content').textContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'nebula-terminal.log'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ----- Starter snippet injection on language change -----
+document.getElementById('lang').addEventListener('change', (e) => {
+  const lang = e.target.value;
+  const snippet = window.starterSnippets[lang];
+  if (snippet) {
+    const current = window.editor.getValue();
+    const looksEmpty = !current.trim() || current.startsWith('//') || current.startsWith('#') || current.startsWith('PRINT');
+    if (looksEmpty) window.editor.setValue(snippet);
+  }
+});
