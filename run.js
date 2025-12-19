@@ -1,61 +1,60 @@
-// run.js — Final complete version
+// run.js — Final complete version with dynamic Judge0 language loading
 
-// ----- Starter snippets (global) -----
+// Starter snippets for some common langs (others will just start empty)
 window.starterSnippets = {
   javascript: "// JavaScript starter\nconsole.log('Hello Nebula');",
   python: "# Python starter\nprint('Hello Nebula')",
-  cpp: "#include <iostream>\nint main(){ std::cout << \"Hello Nebula\"; return 0; }",
-  c: "#include <stdio.h>\nint main(){ printf(\"Hello Nebula\\n\"); return 0; }",
-  java: "class Main { public static void main(String[] args){ System.out.println(\"Hello Nebula\"); } }",
-  go: "package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"Hello Nebula\") }",
-  rust: "fn main(){ println!(\"Hello Nebula\"); }",
-  ruby: "puts 'Hello Nebula'",
-  php: "<?php echo 'Hello Nebula'; ?>",
-  swift: "print(\"Hello Nebula\")",
-  scala: "object Main extends App { println(\"Hello Nebula\") }",
-  kotlin: "fun main(){ println(\"Hello Nebula\") }",
-  haskell: "main = putStrLn \"Hello Nebula\"",
-  lua: "print('Hello Nebula')",
-  perl: "print \"Hello Nebula\\n\";",
-  r: "cat('Hello Nebula\\n')",
-  dart: "void main(){ print('Hello Nebula'); }",
-  elixir: "IO.puts(\"Hello Nebula\")",
-  erlang: "-module(main).\n-export([main/0]).\nmain() -> io:format(\"Hello Nebula~n\").",
-  ocaml: "print_endline \"Hello Nebula\"",
-  nim: "echo \"Hello Nebula\"",
-  groovy: "println 'Hello Nebula'",
-  bash: "echo 'Hello Nebula'",
-  vbnet: "Module Program\n  Sub Main()\n    Console.WriteLine(\"Hello Nebula\")\n  End Sub\nEnd Module",
-  clojure: "(println \"Hello Nebula\")",
-  crystal: "puts \"Hello Nebula\"",
   qbasic: "PRINT \"Hello Nebula\""
 };
 
-// ----- Populate dropdown -----
-function populateLangDropdown() {
-  const langSelect = document.getElementById("lang");
-  langSelect.innerHTML = "";
+// Registry of Judge0 languages
+window.LangRegistry = { map: {}, byId: {} };
 
-  // Always show JavaScript first (local runner)
-  const jsOpt = document.createElement("option");
-  jsOpt.value = "javascript";
-  jsOpt.textContent = "JavaScript (local)";
-  langSelect.appendChild(jsOpt);
+// ----- Load all Judge0 languages and populate dropdown -----
+async function loadJudge0Languages() {
+  try {
+    const res = await fetch("https://ce.judge0.com/languages");
+    const langs = await res.json();
 
-  // Add the rest from starterSnippets keys
-  Object.keys(window.starterSnippets)
-    .filter(k => k !== "javascript")
-    .sort()
-    .forEach(k => {
+    const select = document.getElementById("lang");
+    select.innerHTML = "";
+
+    // Always put JS first (local runner)
+    const jsOpt = document.createElement("option");
+    jsOpt.value = "javascript";
+    jsOpt.textContent = "JavaScript (local)";
+    select.appendChild(jsOpt);
+
+    langs.forEach(lang => {
+      const key = lang.name.toLowerCase();
       const opt = document.createElement("option");
-      opt.value = k;
-      opt.textContent = k.charAt(0).toUpperCase() + k.slice(1);
-      langSelect.appendChild(opt);
+      opt.value = key;
+      opt.textContent = lang.name;
+      select.appendChild(opt);
+
+      window.LangRegistry.map[key] = { id: lang.id, label: lang.name };
+      window.LangRegistry.byId[lang.id] = { key, label: lang.name };
     });
 
-  langSelect.value = "javascript";
+    select.value = "javascript";
+  } catch (err) {
+    window.printTerminal("Failed to load Judge0 languages: " + err.message);
+    // Fallback minimal list
+    const select = document.getElementById("lang");
+    select.innerHTML = `
+      <option value="javascript">JavaScript (local)</option>
+      <option value="python">Python</option>
+      <option value="cpp">C++</option>
+      <option value="java">Java</option>
+      <option value="go">Go</option>
+      <option value="rust">Rust</option>
+      <option value="ruby">Ruby</option>
+      <option value="php">PHP</option>
+      <option value="qbasic">QBasic</option>
+    `;
+  }
 }
-populateLangDropdown();
+loadJudge0Languages();
 
 // ----- Run history helpers -----
 const runHistory = [];
@@ -68,19 +67,24 @@ function nowTime(){ const d=new Date(); return d.toLocaleTimeString(); }
 
 // ----- Judge0 runner -----
 async function runViaJudge0(code, langKey) {
+  const entry = window.LangRegistry.map[langKey];
+  const langId = entry && entry.id;
+  if (!langId) {
+    window.printTerminal(`No Judge0 language ID for "${langKey}".`);
+    pushRunHistory({ lang: langKey, status: 'No ID', time: nowTime() });
+    return;
+  }
   try {
-    window.printTerminal(`Submitting to Judge0 (${langKey})...`);
-    const res = await window.runOnJudge0(code, 71); // default to Python ID for demo
+    window.printTerminal(`Submitting to Judge0 (${entry.label})...`);
+    const res = await window.runOnJudge0(code, langId);
     if (res.compile_output) window.printTerminal("Compile:\n" + res.compile_output);
     if (res.stdout) window.printTerminal("Output:\n" + res.stdout);
     if (res.stderr) window.printTerminal("Error:\n" + res.stderr);
     window.printTerminal(`Status: ${res.status.description} | time: ${res.time}s | memory: ${res.memory}KB`);
     pushRunHistory({ lang: langKey, status: res.status.description, time: nowTime() });
-    return { used: true, ok: true };
   } catch (e) {
     window.printTerminal("Judge0 Error: " + e.message);
     pushRunHistory({ lang: langKey, status: "Error", time: nowTime() });
-    return { used: true, ok: false };
   }
 }
 
@@ -88,21 +92,21 @@ async function runViaJudge0(code, langKey) {
 document.getElementById("run-btn").onclick = async () => {
   window.clearTerminal();
   const code = window.editor.getValue();
-  const lang = document.getElementById("lang").value;
+  const langKey = document.getElementById("lang").value;
 
-  if (lang === "javascript") {
+  if (langKey === "javascript") {
     try {
       const result = (function(){ return eval(code); })();
       if (result !== undefined) window.printTerminal(String(result));
-      pushRunHistory({ lang, status: 'OK', time: nowTime() });
+      pushRunHistory({ lang: langKey, status: 'OK', time: nowTime() });
     } catch (e) {
-      window.printTerminal('JS Error: ' + (e.message || String(e)));
-      pushRunHistory({ lang, status: 'Error', time: nowTime() });
+      window.printTerminal("JS Error: " + e.message);
+      pushRunHistory({ lang: langKey, status: 'Error', time: nowTime() });
     }
     return;
   }
 
-  await runViaJudge0(code, lang);
+  await runViaJudge0(code, langKey);
 };
 
 // ----- Terminal actions -----
