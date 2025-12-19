@@ -1,20 +1,8 @@
-// app.js — Final Refined Version
+// app.js — Final fixed version (no duplicate starterSnippets)
 
 let __files = [];
 let __activeId = null;
 let __nextId = 1;
-
-/* Starter snippets per language */
-const starterSnippets = {
-  javascript: "// JavaScript starter\nconsole.log('Hello Nebula');",
-  python: "# Python starter\nprint('Hello Nebula')",
-  cpp: "#include <iostream>\nint main(){ std::cout << \"Hello Nebula\"; }",
-  java: "class Main { public static void main(String[] args){ System.out.println(\"Hello Nebula\"); } }",
-  go: "package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"Hello Nebula\") }",
-  rust: "fn main(){ println!(\"Hello Nebula\"); }",
-  ruby: "puts 'Hello Nebula'",
-  php: "<?php echo 'Hello Nebula'; ?>"
-};
 
 /* Tabs rendering */
 function renderTabs(){
@@ -38,7 +26,12 @@ function renderTabs(){
 
 /* Create/load files */
 function createFile({ name, language }){
-  const f = { id: __nextId++, name, language, content: starterSnippets[language] || '' };
+  const f = { 
+    id: __nextId++, 
+    name, 
+    language, 
+    content: window.starterSnippets[language] || '' 
+  };
   __files.push(f);
   __activeId = f.id;
   renderTabs();
@@ -105,7 +98,7 @@ require(['vs/editor/editor.main'], function() {
   });
 
   const monacoEditor = monaco.editor.create(document.getElementById('editor'), {
-    value: starterSnippets.javascript,
+    value: window.starterSnippets.javascript,
     language: 'javascript',
     theme: 'nebula-dark',
     fontSize: 13,
@@ -145,8 +138,8 @@ document.getElementById('lang').addEventListener('change', (e) => {
   const f = __files.find(x => x.id === __activeId);
   if (f) {
     f.language = lang;
-    if (!f.content || f.content.trim() === '' || f.content.startsWith('//') || f.content.startsWith('#')) {
-      f.content = starterSnippets[lang] || '';
+    if (!f.content || f.content.trim() === '' || f.content.startsWith('//') || f.content.startsWith('#') || f.content.startsWith('PRINT')) {
+      f.content = window.starterSnippets[lang] || '';
       window.editor.setValue(f.content);
     }
   }
