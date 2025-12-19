@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Nebula IDE — Refined</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+</head>
+<body>
+
+<!-- Top bar -->
+<header class="toolbar">
+  <div class="brand">
+    <div class="logo">N</div>
+    <div class="titles">
+      <div class="title">Nebula IDE</div>
+      <div class="subtitle">Refined Build</div>
+    </div>
+  </div>
+
+  <nav class="controls">
+    <button id="tab-files" class="tab active" data-panel="panel-files" title="Files">📁</button>
+    <button id="tab-ai" class="tab" data-panel="panel-ai" title="AI">🤖</button>
+    <button id="tab-view" class="tab" data-panel="panel-view" title="View">🧭</button>
+    <button id="tab-run" class="tab" data-panel="panel-run" title="Run history">📜</button>
+  </nav>
+
+  <div class="select-run">
+    <label for="lang"></label><select id="lang">
+      <option value="javascript">JavaScript (local)</option>
+      <option value="python">Python (Judge0)</option>
+      <option value="cpp">C++ (Judge0)</option>
+      <option value="java">Java (Judge0)</option>
+      <option value="go">Go (Judge0)</option>
+      <option value="rust">Rust (Judge0)</option>
+      <option value="ruby">Ruby (Judge0)</option>
+      <option value="php">PHP (Judge0)</option>
+    </select>
+    <button id="run-btn">▶ Run</button>
+    <button id="clear-btn" class="icon-btn" title="Clear terminal">🧹</button>
+  </div>
+</header>
+
+<!-- Panels row (anchored, not absolute) -->
+<section class="panels-row">
+  <div id="panel-files" class="tool-panel show">
+    <div class="panel-header">Files</div>
+    <div id="file-tabs" class="file-tabs"></div>
+    <div class="panel-actions">
+      <button id="new-file" class="panel-btn">New</button>
+      <button id="open-sample" class="panel-btn">Sample</button>
+      <button id="upload-file" class="panel-btn">Upload</button>
+      <input type="file" id="upload-input" hidden />
+      <button id="save-file" class="panel-btn">Download</button>
+    </div>
+  </div>
+
+  <div id="panel-ai" class="tool-panel">
+    <div class="panel-header">AI Assistant</div>
+    <div class="panel-actions">
+      <label for="ai-key"></label><input id="ai-key" class="panel-input" placeholder="Paste local key" />
+      <button id="save-key" class="panel-btn">Save</button>
+      <button id="ask-ai" class="panel-btn">Ask AI</button>
+      <button id="ai-suggest-inline" class="panel-btn">Inline Suggest</button>
+    </div>
+    <div class="panel-note">Configure your backend at /api/ai for local dev.</div>
+  </div>
+
+  <div id="panel-view" class="tool-panel">
+    <div class="panel-header">View</div>
+    <div class="panel-actions">
+      <label><input type="checkbox" id="toggle-minimap" checked> Minimap</label>
+      <label><input type="checkbox" id="toggle-line-numbers" checked> Line numbers</label>
+      <label><input type="checkbox" id="toggle-word-wrap"> Word wrap</label>
+    </div>
+  </div>
+
+  <div id="panel-run" class="tool-panel">
+    <div class="panel-header">Run history</div>
+    <pre id="run-history">No runs yet.</pre>
+  </div>
+</section>
+
+<!-- Main area -->
+<main class="main">
+  <div class="editor-wrap">
+    <div id="editor"></div>
+    <div class="splitter" id="splitter"></div>
+    <div class="terminal" id="terminal">
+      <div class="terminal-header">
+        <span class="term-title">Terminal</span>
+        <div class="term-actions">
+          <button id="copy-terminal" class="icon-btn" title="Copy">📋</button>
+          <button id="download-log" class="icon-btn" title="Download log">⬇️</button>
+        </div>
+      </div>
+      <pre id="term-content">&gt; Ready.</pre>
+    </div>
+  </div>
+</main>
+
+<script src="terminal.js"></script>
+<script src="judge0.js"></script>
+<script src="ai.js"></script>
+<script src="run.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
